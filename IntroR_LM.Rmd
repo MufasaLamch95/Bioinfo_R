@@ -1,0 +1,140 @@
+---
+title: "Introducción a R"
+author: "Luis Maldonado"
+date: "2023-07-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# INTRODUCCIÓN A R
+
+Se revisará los fundamentos de R
+
+## Vectores
+```{r dormirh}
+dormirH <- c(8, 6, 4, 3, 5, 10)
+nombres <- c("Moises", "Mika", "Dorian", "Ranier", 
+             "Emily", "Henry")
+nombres[4]
+```
+## Listas
+
+```{r lista}
+Hdormir = list(nombre = nombres, 
+               horas = dormirH)
+Hdormir$horas[2]
+```
+
+## DataFrame (tablas)
+
+```{r tablas}
+df_dormir <- data.frame(list(nombre = nombres, 
+                             horas = dormirH))
+df_dormir
+```
+
+## Leer datos externos
+
+```{r leerExt}
+gbtemp <- read.csv("gbtemp.csv", 
+                   header = TRUE, sep = ",")
+head(gbtemp, 3)
+```
+
+### Exploración
+
+```{r explor_gbtemp}
+str(gbtemp)
+```
+
+```{r summary_bgtemp}
+summary(gbtemp)
+```
+
+## Análisis 
+
+### Comparación (prueba de hipótesis)
+$H_0: \mu_w = \mu_su = \mu_sp = \mu_f$ No existe diferencia en las medidas asociado a la temporada. 
+
+$H_a: \mu_w \neq \mu_su \neq \mu_sp \neq \mu_f$ Al menos una de las estaciones presenta una medida diferente. 
+
+
+```{r gbtemp_hip}
+gbtemp$SEASON <- as.factor(gbtemp$SEASON)
+
+library(dplyr)
+gbtemp %>% group_by(SEASON) %>% 
+  summarise(mean_meas = mean(MEASUREMENT))
+```
+
+### Análisis de varianzas (aov, ANOVA)
+
+```{r aov}
+summary(aov(MEASUREMENT ~ SEASON, data = gbtemp))
+```
+
+Con una confianza del 95% existe diferencia de la medida en al menos una de las estaciones. 
+
+#### Análisis posterior (del ANOVA)
+
+```{r post_gbtemp}
+aov_gbtemp <- aov(MEASUREMENT ~ SEASON, data = gbtemp)
+TukeyHSD(aov_gbtemp, "SEASON", inherits = TRUE)
+```
+
+```{r visual}
+library(ggplot2)
+gbtemp %>% ggplot(aes(x= SEASON, y = MEASUREMENT, color = SEASON)) + 
+  geom_boxplot() + theme_classic()
+
+```
+Análisis de regresión (efectos)
+H0:β1=0 No hay cambio del largo del sépalo debido al ancho del sépalo.
+
+Ha:β1≠0 Existe cambio del largo del sépalo debido al ancho del sépalo.
+
+
+```{r}
+irislm = lm(Sepal.Length ~ Sepal.Width, data = iris)
+summary(irislm)
+```
+```{r}
+plot( x= iris$Sepal.Width, y = iris$Sepal.Length)
+```
+```{r}
+plot( x= iris$Petal.Width, y = iris$Petal.Length)
+```
+
+```{r}
+irislm = lm(Petal.Length ~ Petal.Width, data = iris)
+summary(irislm)
+```
+
+```{r}
+library(ggplot2)
+iris %>%  ggplot(aes(x= Petal.Width, y = Petal.Length, fill = Species)) + 
+  geom_point() + geom_smooth(method = "lm") + theme_light() + 
+  facet_grid(Species ~ ., scales = "free" )
+```
+## `geom_smooth()` using formula = 'y ~ x'
+Con un valor al 95% de confianza se aceptan los valores de $\beta:0$ y $\beta:1$. Cuando no existe medida del ancho del petalo , la medida del largo es de 1.08 mm (biologicamente no es posible)
+por cada 2.22 mm de cambio en el largo del petalo el ancho cambia en 1mm.
+
+$$PL = 1.08 + 2.22 \cdot PW + \epsilon$$
+
+#Actividad
+
+Replica de la regresion lineal en la data de palmer penguins.
+hacer una regresion lineal de la data.
+
+```{r}
+library(palmerpenguins)
+plot(x = penguins$flipper_length_mm, y = penguins$body_mass_g)
+penguinslm <- lm(flipper_length_mm ~ body_mass_g, data = penguins)
+summary(penguinslm)
+```
+
+
